@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Fisheries Biology Endless Quest - มหา1ลัยประมงท้าประลอง</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e0f7fa; color: #006064; margin: 0; padding: 20px; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #00838f; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #00acc1; font-size: 0.9em; margin-bottom: 20px; }
+        .stats-bar { display: flex; justify-content: space-between; background: #f0f4c3; padding: 10px 15px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; color: #33691e; }
+        .question-box { font-size: 1.15em; margin: 20px 0; font-weight: bold; line-height: 1.5; }
+        .badge { display: inline-block; background: #00bcd4; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; margin-bottom: 10px; }
+        .btn { display: block; width: 100%; padding: 12px; margin: 10px 0; background: #00acc1; color: white; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; transition: 0.2s; text-align: left; padding-left: 20px;}
+        .btn:hover { background: #00838f; }
+        .btn:disabled { background: #b0bec5; cursor: not-allowed; }
+        #feedback { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; display: none; }
+        .correct { background: #c8e6c9; color: #2e7d32; }
+        .incorrect { background: #ffcdd2; color: #c62828; }
+        .next-btn { background: #ff7043 !important; text-align: center !important; font-weight: bold; display: none; }
+        .next-btn:hover { background: #f4511e !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🐟 Fisheries Biology Endless Quest</h1>
+    <div class="subtitle">ตะลุยโจทย์มีนวิทยา สัณฐานวิทยา กายวิภาค และการเพาะพันธุ์สัตว์น้ำ</div>
+    
+    <div class="stats-bar">
+        <span id="score-text">คะแนน: 0</span>
+        <span id="streak-text">คอมโบ 🔥: 0</span>
+        <span id="q-count">ข้อที่: 1</span>
+    </div>
+
+    <div id="game-container">
+        <div id="badge-category" class="badge">หมวดหมู่</div>
+        <div class="question-box" id="question-text">กำลังโหลดคำถาม...</div>
+        <div id="options-container"></div>
+        <div id="feedback"></div>
+        <button class="btn next-btn" id="next-btn" onclick="nextQuestion()">ลุยข้อถัดไป ➡️</button>
+    </div>
+</div>
+
+<script>
+    // คลังข้อถามแบบสุ่มวนไปเรื่อยๆ (สามารถเพิ่มข้อสอบลงในอาเรย์นี้ได้ไม่จำกัด)
+    const questionBank = [
+        {
+            category: "ด่านที่ 1: อนุกรมวิธานและสัณฐานวิทยา (Taxonomy)",
+            q: "ปลาเศรษฐกิจชนิดใดที่มีเกล็ดแบบ Ctenoid (เกล็ดขอบหยัก) และมีก้านครีบแข็งที่ครีบหลังส่วนหน้าชัดเจน?",
+            options: ["ปลานิล (Nile Tilapia)", "ปลาตะเพียน (Java Barb)", "ปลาไน (Common Carp)", "ปลาดุกยักษ์ (Giant Catfish)"],
+            answer: 0,
+            explanation: "ถูกต้อง! ปลานิลจัดอยู่ในวงศ์ Cichlidae มีลักษณะเกล็ดแบบ Ctenoid และมีก้านครีบแข็งที่ครีบหลัง"
+        },
+        {
+            category: "ด่านที่ 2: กายวิภาคและสรีรวิทยา (Anatomy & Physiology)",
+            q: "อวัยวะส่วนใดในปลาทำหน้าที่หลักในการควบคุมการลอยตัว (Hydrostatic organ) เพื่อช่วยให้ปลาทรงตัวในระดับน้ำต่างๆ ได้?",
+            options: ["ตับ (Liver)", "กระเพาะลม (Swim Bladder)", "ม้าม (Spleen)", "ไต (Kidney)"],
+            answer: 1,
+            explanation: "ถูกต้อง! กระเพาะลมช่วยปรับความหนาแน่นของร่างกายปลาให้สมดุลกับน้ำ"
+        },
+        {
+            category: "ด่านที่ 3: นิเวศวิทยาและพฤติกรรม (Ecology & Behavior)",
+            q: "ปลาที่มีลักษณะทางเดินอาหาร 'สั้นมาก' และมีช่องปากกว้าง มักมีพฤติกรรมการกินอาหารแบบใด?",
+            options: ["กินพืชเป็นหลัก (Herbivore)", "กินซากอินทรีย์ (Detritivore)", "กินเนื้อเป็นหลัก (Carnivore)", "กินทุกอย่าง (Omnivore)"],
+            answer: 2,
+            explanation: "ถูกต้อง! ปลาล่าเหยื่อหรือกินเนื้อ (Carnivore) จะมีลำไส้สั้นเพราะเนื้อย่อยง่ายกว่าพืช"
+        },
+        {
+            category: "ด่านที่ 4: การเพาะพันธุ์สัตว์น้ำ (Aquaculture & Breeding)",
+            q: "ในการฉีดฮอร์โมนสังเคราะห์เพื่อกระตุ้นการวางไข่ในปลาไทย (เช่น ปลาตะเพียนหรือปลาไน) นิยมใช้ฮอร์โมนกลุ่มใดร่วมกับสารละลายโดปามีนบล็อกเกอร์?",
+            options: ["ฮอร์โมน LHRH-a / Buserelin", "ฮอร์โมนอินซูลิน (Insulin)", "ฮอร์โมนไทร็อกซิน (Thyroxine)", "ฮอร์โมนเทสโทสเตอโรน (Testosterone)"],
+            answer: 0,
+            explanation: "ถูกต้อง! LHRH-a นิยมใช้กระตุ้นการตกไข่ในปลาเศรษฐกิจ"
+        },
+        {
+            category: "ด่านที่ 5: การคำนวณทางประมง (Fisheries Mathematics)",
+            q: "หากการเลี้ยงปลานิลชุดหนึ่งใช้ให้อาหารไปทั้งหมด 500 กิโลกรัม และน้ำหนักรวมของปลาที่เพิ่มขึ้น (Biomass gain) เท่ากับ 250 กิโลกรัม ค่า FCR จะเท่ากับเท่าไหร่?",
+            options: ["1.0", "1.5", "2.0", "2.5"],
+            answer: 2,
+            explanation: "ถูกต้อง! FCR = ปริมาณอาหารที่ใช้ (500) หารด้วยน้ำหนักปลาที่เพิ่มขึ้น (250) = 2.0"
+        },
+        {
+            category: "ด่านที่ 6: ปรสิตและโรคปลา (Fish Diseases)",
+            q: "จุดขาว (Ich) ที่พบบ่อยบนตัวปลา เกิดจากสิ่งมีชีวิตกลุ่มใด?",
+            options: ["แบคทีเรีย (Bacteria)", "ไวรัส (Virus)", "โปรโตซัว (Protozoa - Ichthyophthirius multifiliis)", "หนอนพยาธิ (Nematode)"],
+            answer: 2,
+            explanation: "ถูกต้อง! โรคจุดขาวเกิดจากโปรโตซัวปลิงใสหรือ Ichthyophthirius multifiliis"
+        },
+        {
+            category: "ด่านที่ 7: คุณภาพน้ำในการเพาะเลี้ยง (Water Quality)",
+            q: "ค่าไนไตรต์ ($\text{NO}_2^-$) ที่สูงเกินไปในบ่อเลี้ยงปลา ส่งผลกระทบโดยตรงต่อระบบใดของปลามากที่สุด?",
+            options: ["ระบบย่อยอาหาร", "ระบบหายใจและการขนส่งออกซิเจนในเลือด (Methemoglobinemia)", "ระบบประสาทส่วนกลาง", "ระบบขับถ่ายปัสสาวะ"],
+            answer: 1,
+            explanation: "ถูกต้อง! ไนไตรต์จะไปเปลี่ยนฮีโมโกลบินเป็นเมทฮีโมโกลบิน ทำให้ปลาขาดออกซิเจนแม้ในน้ำจะมี DO สูง"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let questionCounter = 1;
+    let shuffledPool = [];
+
+    // สุ่มสลับคำถามเพื่อความสนุก
+    function shuffleArray(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function initGame() {
+        shuffledPool = shuffleArray(questionBank);
+        currentQuestionIndex = 0;
+        score = 0;
+        streak = 0;
+        questionCounter = 1;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= shuffledPool.length) {
+            // ถ้ารวมหมดรอบแล้ว สลับชุดใหม่เล่นวนไปเรื่อยๆ ไม่มีวันจบ
+            shuffledPool = shuffleArray(questionBank);
+            currentQuestionIndex = 0;
+        }
+
+        const qData = shuffledPool[currentQuestionIndex];
+        
+        document.getElementById("badge-category").innerText = qData.category;
+        document.getElementById("question-text").innerText = qData.q;
+        document.getElementById("q-count").innerText = "ข้อที่: " + questionCounter;
+        document.getElementById("score-text").innerText = "คะแนน: " + score;
+        document.getElementById("streak-text").innerText = "คอมโบ 🔥: " + streak;
+
+        const optContainer = document.getElementById("options-container");
+        optContainer.innerHTML = "";
+
+        qData.options.forEach((opt, index) => {
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.innerText = (index + 1) + ". " + opt;
+            btn.onclick = () => checkAnswer(index, qData.answer, qData.explanation);
+            optContainer.appendChild(btn);
+        });
+
+        document.getElementById("feedback").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+    }
+
+    function checkAnswer(selected, correct, explanation) {
+        const buttons = document.querySelectorAll("#options-container .btn");
+        buttons.forEach(b => b.disabled = true); // ปิดปุ่มไม่ให้กดซ้ำ
+
+        const feedback = document.getElementById("feedback");
+        feedback.style.display = "block";
+
+        if (selected === correct) {
+            score += 10 + (streak * 2); // ได้โบนัสตามคอมโบ
+            streak += 1;
+            feedback.className = "correct";
+            feedback.innerHTML = "🎉 เยี่ยมมาก! " + explanation;
+        } else {
+            streak = 0; // ตัดคอมโบ
+            feedback.className = "incorrect";
+            feedback.innerHTML = "❌ ผิดครับ! " + explanation;
+        }
+
+        document.getElementById("score-text").innerText = "คะแนน: " + score;
+        document.getElementById("streak-text").innerText = "คอมโบ 🔥: " + streak;
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        questionCounter++;
+        loadQuestion();
+    }
+
+    // เริ่มเกมครั้งแรก
+    initGame();
+</script>
+
+</body>
+</html>
